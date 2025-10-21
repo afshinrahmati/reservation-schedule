@@ -1,15 +1,18 @@
 // src/main.ts
 import { ValidationPipe } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import {NestFactory, Reflector} from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import 'module-alias/register';
+import { GlobalHttpExceptionFilter } from '@/core/_shared/http/filters/http-exception.filter';
+import {LogMiddleware} from "@/core/_shared/middlewares/log.middleware";
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.use(new LogMiddleware().use);
 
+    app.useGlobalFilters(new GlobalHttpExceptionFilter());
     const swaggerConfig = new DocumentBuilder()
         .setTitle('Booking API')
         .setDescription('Hotel Booking System REST API')

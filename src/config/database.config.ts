@@ -1,9 +1,10 @@
-export default () => ({
-    db: {
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT ?? '3306', 10),
-        username: process.env.DB_USER,
-        password: process.env.DB_PASS,
-        database: process.env.DB_NAME,
-    },
-});
+import { registerAs } from '@nestjs/config';
+
+export default registerAs('database', () => ({
+  host: process.env.PSQL_HOST ?? 'localhost',
+  port: process.env.PSQL_PORT ? Number(process.env.PSQL_PORT) : 5432,
+  username: process.env.PSQL_USERNAME ?? 'app',
+  password: process.env.PSQL_PASS ?? 'app',
+  db: process.env.PSQL_DB ?? 'hotel',
+  logging: true,
+}));

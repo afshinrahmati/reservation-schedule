@@ -1,15 +1,13 @@
-import { Module, OnModuleInit } from '@nestjs/common';
-import { MailerService } from './infrastructure/mailer.service';
+import { Module } from '@nestjs/common';
+import { IdentityEventsSubscriber } from './application/subscribers/identity-events.subscriber';
+import { NotificationLoggerRepo } from './infrastructure/notification-logger.repo';
 import { SmsService } from './infrastructure/sms.service';
-import {NotificationService} from "@/core/notification/domain/services/notification.service";
-import {RabbitMqListener} from "@/core/notification/infrastructure/rabbitmq-listener.service";
+import { MailerService } from './infrastructure/mailer.service';
+import { EventBusModule } from '@/infrastructure/eventbus/event-bus.module';
 
 @Module({
-    providers: [NotificationService, RabbitMqListener, MailerService, SmsService],
+      imports: [EventBusModule],
+
+    providers: [IdentityEventsSubscriber, NotificationLoggerRepo, MailerService, SmsService],
 })
-export class NotificationModule implements OnModuleInit {
-    constructor(private readonly listener: RabbitMqListener) {}
-    async onModuleInit() {
-        await this.listener.start();
-    }
-}
+export class NotificationModule { }

@@ -1,35 +1,16 @@
-import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import {JwtAuthGuard} from "@/userInterfaces/rest/components/guards/jwt-auth.guard";
-import {ConfirmBookingDto, CreateBookingDto} from "@/userInterfaces/rest/modules/api/booking/booking.dto";
-import {CreateBookingHandler} from "@/core/booking/application/create-booking.handler";
-import {ConfirmBookingHandler} from "@/core/booking/application/confirm-booking.handler";
-import {CreateBookingCommand} from "@/core/booking/application/create-booking.command";
-import {ConfirmBookingCommand} from "@/core/booking/application/confirm-booking.command";
-
-
-@ApiTags('Bookings')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+import { CreateBookingDto } from '@/core/booking/application/dto/create-booking.dto';
+import { CreateBookingCommand } from '@/core/booking/application/commands/create-booking.command';
+import { ConfirmBookingCommand } from '@/core/booking/application/commands/confirm-booking.command';
+import {ConfirmBookingDto} from "@/core/booking/application/dto/confirm-booking.dto";
+import {JwtStrategy} from "@/core/_shared/security/jwt.strategy";
+@UseGuards(JwtStrategy)
+@ApiBearerAuth() @ApiTags('Bookings')
 @Controller('bookings')
 export class BookingController {
-    constructor(
-        private readonly createBooking: CreateBookingHandler,
-        private readonly confirmBooking: ConfirmBookingHandler,
-    ) {}
-
-    @Post()
-    async create(@Body() dto: CreateBookingDto, @Req() req: any) {
-        const userId = req.user?.id;
-        const startAt = new Date(dto.startAt);
-
-        const endAt = new Date(startAt.getTime() + 60 * 60 * 1000);
-        return this.createBooking.execute(new CreateBookingCommand(userId, dto.roomId, startAt, endAt));
-    }
-
-    @Post('confirm')
-    async confirm(@Body() dto: ConfirmBookingDto, @Req() req: any) {
-        const userId = req.user?.id;
-        return this.confirmBooking.execute(new ConfirmBookingCommand(userId, dto.bookingId));
-    }
+    constructor(private cmd: CommandBus) {}
+    @Post() create(@Body() dto: CreateBookingDto, @Req() req){ return this.cmd.execute(new CreateBookingCommand(req.user.id, dto)); }
+    @Post('confirm') confirm(@Body() dto: ConfirmBookingDto, @Req() req){ return this.cmd.execute(new ConfirmBookingCommand(req.user.id, dto.bookingId)); }
 }

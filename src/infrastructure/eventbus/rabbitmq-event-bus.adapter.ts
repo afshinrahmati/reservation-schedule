@@ -1,56 +1,43 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { EventBusPort } from '@/core/_shared/application/ports/event-bus.port';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as amqp from 'amqplib';
-import { EventBusPort } from '@/core/_port/common/event-bus.port';
 
 @Injectable()
-export class RabbitMqEventBusAdapter implements EventBusPort {
-    private channel: amqp.Channel;
-    private readonly logger = new Logger(RabbitMqEventBusAdapter.name);
+export class RabbitMQEventBusAdapter implements EventBusPort, OnModuleInit {
+  private conn!: amqp.Connection;
+  private ch!: amqp.Channel;
+  private readonly exchange = 'domain_events';
 
-    constructor(private readonly config: ConfigService) {
-        this.init();
-    }
+  constructor(private cfg: ConfigService) {}
 
-    private async init() {
-        const host = this.config.get<string>('rabbit.host');
-        const port = this.config.get<number>('rabbit.port');
-        const user = this.config.get<string>('rabbit.user');
-        const password = this.config.get<string>('rabbit.password');
-        const exchange = this.config.get<string>('rabbit.exchange');
+  async onModuleInit() {
+    const r = this.cfg.get('rabbit'); // از registerAs('rabbit')
+    this.conn = await amqp.connect({
+      protocol: 'amqp',
+      hostname: r.host,
+      port: r.port,
+      username: r.user,
+      password: r.password,  
+      vhost: r.vhost,
+    });
+    this.ch = await this.conn.createChannel();
+    await this.ch.assertExchange(this.exchange, 'topic', { durable: true });
+  }
 
-        const uri = `amqp://${user}:${password}@${host}:${port}`;
+  async publish(routingKey: string, payload: any) {
+    this.ch.publish(this.exchange, routingKey, Buffer.from(JSON.stringify(payload)), {
+      persistent: true, contentType: 'application/json',
+    });
+  }
 
-        try {
-            const conn = await amqp.connect(uri);
-            this.channel = await conn.createChannel();
-            await this.channel.assertExchange(exchange, 'fanout', { durable: true });
-            this.logger.log(`✅ Connected to RabbitMQ at ${uri}, exchange: ${exchange}`);
-        } catch (err) {
-            this.logger.error(`❌ RabbitMQ connection failed: ${err.message}`);
-            // fallback به حالت mock
-            this.channel = null;
-        }
-    }
-
-    async publish(event: any): Promise<void> {
-        const exchange = this.config.get<string>('rabbit.exchange');
-
-        if (!this.channel) {
-            this.logger.warn(`⚠️ RabbitMQ unavailable → Mock publish: ${event.constructor.name}`);
-            return;
-        }
-
-        try {
-            const payload = JSON.stringify({
-                type: event.constructor.name,
-                data: event,
-                timestamp: new Date(),
-            });
-            this.channel.publish(exchange, '', Buffer.from(payload));
-            this.logger.log(`📨 Event published: ${event.constructor.name}`);
-        } catch (err) {
-            this.logger.warn(`⚠️ Failed to publish event: ${err.message}`);
-        }
-    }
+  async subscribe(routingKey: string, handler: (payload: any) => Promise<void>) {
+    const q = await this.ch.assertQueue('', { exclusive: true });
+    await this.ch.bindQueue(q.queue, this.exchange, routingKey);
+    await this.ch.consume(q.queue, async (msg) => {
+      if (!msg) return;
+      try { await handler(JSON.parse(msg.content.toString())); this.ch.ack(msg); }
+      catch { this.ch.nack(msg, false, true); }
+    });
+  }
 }
