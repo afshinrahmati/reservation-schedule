@@ -1,4 +1,9 @@
-import {ApiProperty} from "@nestjs/swagger";
-import {IsUUID} from "class-validator";
+import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class ConfirmBookingDto { @ApiProperty() @IsUUID() bookingId: string; }
+export class ConfirmDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  token: string;
+}

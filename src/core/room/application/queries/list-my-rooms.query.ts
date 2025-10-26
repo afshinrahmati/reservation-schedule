@@ -1,1 +1,3 @@
-export class ListMyRoomsQuery { constructor(public readonly ownerId: string) {} }
+export class ListMyRoomsQuery {
+  constructor(public readonly ownerId: string) {}
+}

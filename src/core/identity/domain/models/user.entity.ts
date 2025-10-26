@@ -1,5 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { RoleEntity } from './role.entity';
+
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid') id: string;
@@ -7,8 +16,10 @@ export class UserEntity {
   @Column('text', { name: 'password_hash' }) passwordHash: string;
   @Column('text', { name: 'full_name', nullable: true }) fullName?: string;
   @Column('boolean', { name: 'is_active', default: true }) isActive: boolean;
-  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' }) createdAt: Date;
-  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' }) updatedAt: Date;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  createdAt: Date;
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
+  updatedAt: Date;
 
   @ManyToMany(() => RoleEntity, { eager: true })
   @JoinTable({

@@ -12,13 +12,13 @@ export class RabbitMQEventBusAdapter implements EventBusPort, OnModuleInit {
   constructor(private cfg: ConfigService) {}
 
   async onModuleInit() {
-    const r = this.cfg.get('rabbit'); // از registerAs('rabbit')
+    const r = this.cfg.get('rabbit');
     this.conn = await amqp.connect({
       protocol: 'amqp',
       hostname: r.host,
       port: r.port,
       username: r.user,
-      password: r.password,  
+      password: r.password,
       vhost: r.vhost,
     });
     this.ch = await this.conn.createChannel();
@@ -26,18 +26,31 @@ export class RabbitMQEventBusAdapter implements EventBusPort, OnModuleInit {
   }
 
   async publish(routingKey: string, payload: any) {
-    this.ch.publish(this.exchange, routingKey, Buffer.from(JSON.stringify(payload)), {
-      persistent: true, contentType: 'application/json',
-    });
+    this.ch.publish(
+      this.exchange,
+      routingKey,
+      Buffer.from(JSON.stringify(payload)),
+      {
+        persistent: true,
+        contentType: 'application/json',
+      },
+    );
   }
 
-  async subscribe(routingKey: string, handler: (payload: any) => Promise<void>) {
+  async subscribe(
+    routingKey: string,
+    handler: (payload: any) => Promise<void>,
+  ) {
     const q = await this.ch.assertQueue('', { exclusive: true });
     await this.ch.bindQueue(q.queue, this.exchange, routingKey);
     await this.ch.consume(q.queue, async (msg) => {
       if (!msg) return;
-      try { await handler(JSON.parse(msg.content.toString())); this.ch.ack(msg); }
-      catch { this.ch.nack(msg, false, true); }
+      try {
+        await handler(JSON.parse(msg.content.toString()));
+        this.ch.ack(msg);
+      } catch {
+        this.ch.nack(msg, false, true);
+      }
     });
   }
 }

@@ -6,8 +6,13 @@ import { MailerService } from './infrastructure/mailer.service';
 import { EventBusModule } from '@/infrastructure/eventbus/event-bus.module';
 
 @Module({
-      imports: [EventBusModule],
+  imports: [EventBusModule],
 
-    providers: [IdentityEventsSubscriber, NotificationLoggerRepo, MailerService, SmsService],
+  providers: [
+    IdentityEventsSubscriber,
+    NotificationLoggerRepo,
+    MailerService,
+    SmsService,
+  ],
 })
-export class NotificationModule { }
+export class NotificationModule {}

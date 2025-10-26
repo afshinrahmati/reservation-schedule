@@ -1,1 +1,6 @@
-export class ConfirmBookingCommand { constructor(public readonly userId:string, public readonly bookingId:string){} }
+export class ConfirmCommand {
+  constructor(
+    public readonly userId: string,
+    public readonly token: string,
+  ) {}
+}

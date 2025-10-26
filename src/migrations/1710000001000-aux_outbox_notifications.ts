@@ -14,7 +14,9 @@ export class AuxOutboxNotifications1710000001000 implements MigrationInterface {
         sent_at timestamptz
       );
     `);
-    await q.query(`CREATE INDEX IF NOT EXISTS idx_booking_events_unsent ON booking_events(sent_at);`);
+    await q.query(
+      `CREATE INDEX IF NOT EXISTS idx_booking_events_unsent ON booking_events(sent_at);`,
+    );
 
     await q.query(`
       CREATE TABLE IF NOT EXISTS notification_logs (
@@ -28,7 +30,9 @@ export class AuxOutboxNotifications1710000001000 implements MigrationInterface {
         error text
       );
     `);
-    await q.query(`CREATE INDEX IF NOT EXISTS idx_notification_user ON notification_logs(user_id, sent_at DESC);`);
+    await q.query(
+      `CREATE INDEX IF NOT EXISTS idx_notification_user ON notification_logs(user_id, sent_at DESC);`,
+    );
   }
 
   public async down(q: QueryRunner): Promise<void> {

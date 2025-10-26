@@ -45,7 +45,9 @@ export class InitCore1710000000000 implements MigrationInterface {
         created_at timestamptz NOT NULL DEFAULT now()
       );
     `);
-    await q.query(`CREATE INDEX IF NOT EXISTS idx_rooms_owner ON rooms(owner_id);`);
+    await q.query(
+      `CREATE INDEX IF NOT EXISTS idx_rooms_owner ON rooms(owner_id);`,
+    );
 
     await q.query(`
       CREATE TABLE IF NOT EXISTS bookings (
@@ -58,9 +60,15 @@ export class InitCore1710000000000 implements MigrationInterface {
         created_at timestamptz NOT NULL DEFAULT now()
       );
     `);
-    await q.query(`CREATE INDEX IF NOT EXISTS idx_bookings_room ON bookings(room_id);`);
-    await q.query(`CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);`);
-    await q.query(`CREATE INDEX IF NOT EXISTS idx_bookings_room_time ON bookings(room_id, start_at, end_at);`);
+    await q.query(
+      `CREATE INDEX IF NOT EXISTS idx_bookings_room ON bookings(room_id);`,
+    );
+    await q.query(
+      `CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);`,
+    );
+    await q.query(
+      `CREATE INDEX IF NOT EXISTS idx_bookings_room_time ON bookings(room_id, start_at, end_at);`,
+    );
 
     await q.query(`
       ALTER TABLE bookings
@@ -81,12 +89,13 @@ export class InitCore1710000000000 implements MigrationInterface {
   }
 
   public async down(q: QueryRunner): Promise<void> {
-    await q.query(`ALTER TABLE IF EXISTS bookings DROP CONSTRAINT IF EXISTS no_overlap_per_room;`);
+    await q.query(
+      `ALTER TABLE IF EXISTS bookings DROP CONSTRAINT IF EXISTS no_overlap_per_room;`,
+    );
     await q.query(`DROP TABLE IF EXISTS bookings;`);
     await q.query(`DROP TABLE IF EXISTS rooms;`);
     await q.query(`DROP TABLE IF EXISTS user_roles;`);
     await q.query(`DROP TABLE IF EXISTS users;`);
     await q.query(`DROP TABLE IF EXISTS roles;`);
- 
   }
 }
